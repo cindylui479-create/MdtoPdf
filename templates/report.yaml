@@ -1,0 +1,44 @@
+---
+CJKmainfont: "Noto Serif CJK SC"
+CJKsansfont: "Noto Sans CJK SC"
+CJKmonofont: "Noto Sans CJK SC"
+mainfont: "Noto Serif CJK SC"
+sansfont: "Noto Sans CJK SC"
+monofont: "DejaVu Sans Mono"
+geometry: "a4paper, margin=2cm"
+documentclass: "article"
+fontsize: "11pt"
+linestretch: 1.3
+toc: true
+toc-depth: 3
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{xcolor}
+  - \usepackage{fancyhdr}
+  - \usepackage{titlesec}
+  - \usepackage{enumitem}
+  - \usepackage{hyperref}
+  - \usepackage{fancyvrb}
+  - \usepackage{listings}
+  - \definecolor{tableheader}{RGB}{41, 65, 122}
+  - \definecolor{linkcolor}{RGB}{0, 82, 155}
+  - \hypersetup{colorlinks=true, linkcolor=linkcolor, urlcolor=linkcolor, citecolor=linkcolor}
+  - \pagestyle{fancy}
+  - \fancyhf{}
+  - \fancyhead[L]{\small\leftmark}
+  - \fancyhead[R]{\small\rightmark}
+  - \fancyfoot[C]{\thepage}
+  - \renewcommand{\headrulewidth}{0.4pt}
+  - \renewcommand{\footrulewidth}{0.2pt}
+  - \titleformat{\section}{\LARGE\bfseries\color{tableheader}}{}{0em}{}
+  - \titleformat{\subsection}{\Large\bfseries\color{tableheader}}{}{0em}{}
+  - \titleformat{\subsubsection}{\large\bfseries}{}{0em}{}
+  - \setlist[itemize]{leftmargin=2em, itemsep=2pt}
+  - \setlist[enumerate]{leftmargin=2em, itemsep=2pt}
+  - \renewcommand{\arraystretch}{1.4}
+---

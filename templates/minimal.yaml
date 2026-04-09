@@ -1,0 +1,20 @@
+---
+CJKmainfont: "Noto Serif CJK SC"
+CJKsansfont: "Noto Sans CJK SC"
+CJKmonofont: "Noto Sans CJK SC"
+mainfont: "Noto Serif CJK SC"
+sansfont: "Noto Sans CJK SC"
+monofont: "DejaVu Sans Mono"
+geometry: "a4paper, margin=2.5cm"
+documentclass: "article"
+fontsize: "11pt"
+linestretch: 1.2
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{hyperref}
+  - \usepackage{fancyvrb}
+  - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+  - \renewcommand{\arraystretch}{1.3}
+---
