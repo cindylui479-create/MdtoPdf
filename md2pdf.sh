@@ -1,9 +1,19 @@
 #!/bin/bash
 # ============================================================
-# md2pdf - Markdown to PDF Conversion Tool
+# md2pdf - Markdown to PDF Conversion Tool  v1.0.1
 # ============================================================
 # A portable tool for converting Chinese/English Markdown files
 # to well-formatted PDF documents using pandoc + XeLaTeX.
+#
+# Changelog:
+#   v1.0.1 - Fix TOC misalignment (numbered TOC entries now removed correctly;
+#             tocloft dot leaders added); fix table cell overflow (xurl for URL
+#             breaking, ragged2e RaggedRight columns, 0.94 column width budget);
+#             fix page margin overflow (fvextra breaklines=true for all code
+#             blocks, emergencystretch=3em for regular text, preprocess shrinks
+#             wide code blocks to \small / \scriptsize before conversion);
+#             fix TOC page numbers (pandoc→.tex then xelatex×3 so page numbers
+#             converge before the TOC is written to PDF).
 #
 # Usage:
 #   ./md2pdf.sh input.md [output.pdf] [--toc] [--lang zh|en] [--template default|minimal|report]
@@ -136,16 +146,26 @@ get_template_yaml() {
     echo "$tpl"
 }
 
-# ---- Run pandoc ----
+# ---- Run pandoc → .tex, then xelatex × 3 ----
+# Running xelatex 3 times is required for correct TOC page numbers:
+#   Pass 1 – writes .aux/.toc with initial (estimated) page numbers
+#   Pass 2 – reads .toc, updates all cross-references and page numbers
+#   Pass 3 – verifies convergence (handles edge cases in long documents)
 run_pandoc() {
     local src="$1"
     local tpl_yaml
     tpl_yaml="$(get_template_yaml)"
 
+    # Temporary work directory (all LaTeX aux files go here)
+    local work_dir
+    work_dir="$(mktemp -d)"
+    local tex_file="$work_dir/document.tex"
+
+    # Build pandoc command (output .tex instead of .pdf)
     local cmd=(
         pandoc "$src" "$tpl_yaml"
-        -o "$OUTPUT"
-        --pdf-engine=xelatex
+        -t latex --standalone
+        -o "$tex_file"
         --wrap=none
         -V "colorlinks=true"
         -V "fontsize=$FONT_SIZE"
@@ -153,19 +173,41 @@ run_pandoc() {
         -V "linestretch=$LINE_STRETCH"
     )
 
-    # Table of contents
     if [[ "$TOC" == true ]]; then
         cmd+=(--toc --toc-depth=3)
     fi
 
-    # Lua filter for table column widths
     local lua_filter="$FILTERS_DIR/table_wrap.lua"
     if [[ -f "$lua_filter" ]]; then
         cmd+=(--lua-filter="$lua_filter")
     fi
 
-    # Execute directly (not via eval)
-    "${cmd[@]}" 2>&1
+    # Step 1: pandoc → .tex
+    if ! "${cmd[@]}" 2>&1; then
+        rm -rf "$work_dir"
+        error "pandoc failed to generate .tex"
+    fi
+
+    # Step 2: xelatex × 3 for correct TOC page numbers
+    local xelatex_opts=(-interaction=nonstopmode -output-directory="$work_dir")
+    local pass log
+    for pass in 1 2 3; do
+        log="$work_dir/pass${pass}.log"
+        xelatex "${xelatex_opts[@]}" "$tex_file" > "$log" 2>&1 || true
+    done
+
+    # Step 3: move PDF to final destination
+    local generated_pdf="$work_dir/document.pdf"
+    if [[ -f "$generated_pdf" ]]; then
+        mv "$generated_pdf" "$OUTPUT"
+    else
+        # Show last 30 lines of final pass log to help diagnose errors
+        tail -30 "$work_dir/pass3.log" >&2
+        rm -rf "$work_dir"
+        error "xelatex failed to produce a PDF"
+    fi
+
+    rm -rf "$work_dir"
 }
 
 # ---- Main ----

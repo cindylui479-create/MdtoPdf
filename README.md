@@ -122,6 +122,19 @@ The `preprocess.py` script handles Markdown patterns that LaTeX renders poorly:
 
 ## Changelog
 
+### v1.0.1 (2026-04-09)
+
+**Bug fixes:**
+
+- **TOC alignment** — Replaced `titlesec` with `sectsty` in `report.yaml`. `titlesec` redefines section internals and caused `hyperref` anchor placement to land on the wrong page when a heading appeared at the top of a new page, breaking PDF bookmark/outline navigation. `sectsty` changes only fonts and colors, leaving section mechanics intact.
+- **TOC dot leaders** — Added `tocloft` package with `\cftsecleader` / `\cftsubsecleader` / `\cftsubsubsecleader` dot leaders so all TOC levels align page numbers at the right margin.
+- **TOC page numbers** — Rewrote `run_pandoc()` in `md2pdf.sh` to first generate `.tex` via pandoc, then compile with `xelatex` three times. Single-pass compilation produces incorrect TOC page numbers; three passes guarantee convergence.
+- **Table cell overflow** — Added `xurl` (URL line-breaking), `ragged2e`, and `microtype` packages. `table_wrap.lua` now uses 94% of text width (`TOTAL_WIDTH = 0.94`) instead of 100% to prevent cell content from overflowing into page margins.
+- **Code block margin overflow** — Added `fvextra` with `\fvset{breaklines=true, breakanywhere=true}` so all fenced code blocks auto-wrap long lines. `preprocess.py` now also reduces font size (`\small` / `\scriptsize`) for code blocks with very long lines.
+- **Wide table font scaling** — `preprocess.py` adds `\small` before tables with more than 5 columns.
+- **Horizontal rule removal** — `table_wrap.lua` now filters out `HorizontalRule` elements so `---` separators in Markdown do not render as visible lines in the PDF body.
+- **Page overflow tolerance** — Added `\setlength{\emergencystretch}{3em}` and `\setlength{\hfuzz}{3pt}` to reduce overfull box errors in regular paragraphs.
+
 ### v1.0.0 (2026-04-08)
 - Initial release
 - Three templates: default, report, minimal

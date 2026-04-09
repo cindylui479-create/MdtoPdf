@@ -20,11 +20,51 @@ header-includes:
   - \usepackage{colortbl}
   - \usepackage{xcolor}
   - \usepackage{fancyhdr}
-  - \usepackage{titlesec}
+  # sectsty replaces titlesec: only modifies font/color of headings without
+  # redefining the section command internals, so hyperref bookmark anchors
+  # stay at the correct page position (titlesec caused anchors to land on the
+  # previous page when a heading appeared at the top of a new page).
+  - \usepackage{sectsty}
   - \usepackage{enumitem}
   - \usepackage{hyperref}
-  - \usepackage{fancyvrb}
+  - \usepackage{fvextra}
   - \usepackage{listings}
+  # ---------- v1.0.1: TOC alignment fixes ----------
+  # tocloft: precise control over TOC layout and dot leaders
+  - \usepackage{tocloft}
+  # Suppress LaTeX auto-numbering (headings carry their own Chinese/Arabic numbers)
+  - \setcounter{secnumdepth}{0}
+  # Add dot leaders for all TOC levels so page numbers align at the right margin
+  - \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+  - \renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
+  - \renewcommand{\cftsubsubsecleader}{\cftdotfill{\cftdotsep}}
+  # Tighten vertical spacing between TOC entries
+  - \setlength{\cftbeforesecskip}{2pt}
+  - \setlength{\cftbeforesubsecskip}{1pt}
+  # ---------- v1.0.1: Table long-text / URL wrap fixes ----------
+  # xurl: allows line breaks inside URLs and long strings at any character
+  - \usepackage{xurl}
+  # ragged2e: \RaggedRight keeps words from overflowing narrow table columns
+  - \usepackage{ragged2e}
+  # microtype: better inter-word spacing and automatic hyphenation
+  - \usepackage{microtype}
+  # ragged2e provides \RaggedRight for manual use; pandoc's longtable uses
+  # built-in p{} columns (width controlled by table_wrap.lua), so no custom
+  # column type is needed here.
+  # ---------- v1.0.1: Page margin overflow fixes ----------
+  # fancyvrb: break long lines in ALL code blocks (fenced ``` blocks in pandoc
+  # output use the Highlighting/Verbatim environment which respects fvset).
+  # breaksymbolleft={} suppresses the ugly continuation arrow glyph.
+  - \fvset{breaklines=true, breaksymbolleft={}, breaksymbolright={}, breakanywhere=true}
+  # listings: same for \begin{lstlisting} blocks
+  - \lstset{breaklines=true, breakatwhitespace=false, basicstyle=\ttfamily\small}
+  # emergencystretch: last-resort extra inter-word space to prevent overflow in
+  # regular paragraphs containing long technical strings without natural break points
+  - \setlength{\emergencystretch}{3em}
+  # hfuzz: tolerate up to 3pt overfull before LaTeX raises an error and stops
+  # trying to reflow — keeps minor rounding artefacts from blocking compilation
+  - \setlength{\hfuzz}{3pt}
+  # ---------- shared styles ----------
   - \definecolor{tableheader}{RGB}{41, 65, 122}
   - \definecolor{linkcolor}{RGB}{0, 82, 155}
   - \hypersetup{colorlinks=true, linkcolor=linkcolor, urlcolor=linkcolor, citecolor=linkcolor}
@@ -35,9 +75,10 @@ header-includes:
   - \fancyfoot[C]{\thepage}
   - \renewcommand{\headrulewidth}{0.4pt}
   - \renewcommand{\footrulewidth}{0.2pt}
-  - \titleformat{\section}{\LARGE\bfseries\color{tableheader}}{}{0em}{}
-  - \titleformat{\subsection}{\Large\bfseries\color{tableheader}}{}{0em}{}
-  - \titleformat{\subsubsection}{\large\bfseries}{}{0em}{}
+  # sectsty: set heading fonts/colors (equivalent visual result to titlesec)
+  - \sectionfont{\LARGE\bfseries\color{tableheader}}
+  - \subsectionfont{\Large\bfseries\color{tableheader}}
+  - \subsubsectionfont{\large\bfseries}
   - \setlist[itemize]{leftmargin=2em, itemsep=2pt}
   - \setlist[enumerate]{leftmargin=2em, itemsep=2pt}
   - \renewcommand{\arraystretch}{1.4}

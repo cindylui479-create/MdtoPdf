@@ -141,6 +141,19 @@ A: 工具兼容 pandoc 2.9+ 和 3.x。Lua 过滤器已做版本适配。
 
 ## 更新日志
 
+### v1.0.1 (2026-04-09)
+
+**Bug 修复：**
+
+- **PDF 大纲跳转错位** — `report.yaml` 中以 `sectsty` 替换 `titlesec`。`titlesec` 重写了 section 内部机制，导致 `hyperref` 锚点在章节标题出现于新页开头时落到上一页底部，点击大纲栏标题会跳转到错误页面。`sectsty` 仅修改字体和颜色，不改动 section 结构，锚点位置因此正确。
+- **目录对齐** — 引入 `tocloft` 包，为一至三级目录条目添加点引线（dot leaders），页码对齐右边距。
+- **目录页码不准** — 重写 `md2pdf.sh` 的 `run_pandoc()` 函数：先由 pandoc 生成 `.tex` 文件，再连续执行 `xelatex` 三遍。单次编译目录页码无法收敛；三遍编译可确保页码稳定。
+- **表格单元格溢出** — 添加 `xurl`（URL 自动换行）、`ragged2e`、`microtype` 包；`table_wrap.lua` 将列宽预算从 100% 改为 94%，防止单元格内容超出页边距。
+- **代码块超出页面** — 添加 `fvextra` 包并配置 `\fvset{breaklines=true, breakanywhere=true}`，所有代码块长行自动换行；`preprocess.py` 对超长行代码块额外注入 `\small` / `\scriptsize` 字号缩小指令。
+- **宽表格字号缩减** — `preprocess.py` 自动在列数超过 5 的表格前插入 `\small`。
+- **正文横线** — `table_wrap.lua` 过滤掉 `HorizontalRule` 元素，Markdown 中的 `---` 分隔符不再在 PDF 正文中渲染为可见横线。
+- **段落溢出容错** — 添加 `\setlength{\emergencystretch}{3em}` 和 `\setlength{\hfuzz}{3pt}`，减少正文段落中长技术字符串引起的 overfull box 编译错误。
+
 ### v1.0.0 (2026-04-08)
 - 初始版本
 - 三套模板：default、report、minimal

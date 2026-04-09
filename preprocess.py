@@ -18,10 +18,16 @@ import sys
 
 
 def remove_markdown_toc(content: str) -> str:
-    """Remove manually written TOC sections (pandoc auto-generates)."""
-    # Remove ## 目录 / ## Table of Contents section
+    """Remove manually written TOC sections (pandoc auto-generates).
+
+    Handles both bullet-style (- [...]) and numbered-style (1. [...]) entries,
+    with optional blank line between the heading and the first entry.
+    """
     content = re.sub(
-        r'^## (?:目录|Table of Contents)\s*\n(?:- \[.*?\]\(#.*?\)\n)*',
+        r'^## (?:目录|Table of Contents)[ \t]*\n'  # section heading
+        r'\n?'                                       # optional blank line
+        r'(?:(?:\d+\.|-)[ ]\[.*?\]\(#.*?\)\n)+'    # one or more TOC entries
+        r'\n?',                                      # optional trailing blank line
         '',
         content,
         flags=re.MULTILINE,
@@ -153,6 +159,69 @@ def convert_inline_arrows(content: str) -> str:
     return '\n'.join(result)
 
 
+def fix_code_block_overflow(content: str) -> str:
+    """
+    Prevent code blocks from overflowing the page margin.
+
+    Strategy:
+    1. Code blocks whose longest line exceeds LONG_LINE_CHARS are wrapped in a
+       LaTeX ``\\small`` directive so the monospace font is slightly smaller,
+       buying ~15% extra line capacity without breaking the verbatim environment.
+    2. Code blocks whose longest line exceeds WRAP_LINE_CHARS get an additional
+       ``\\scriptsize`` to push even the most extreme cases inside the margin.
+
+    These font-size overrides work because pandoc emits code blocks as
+    ``\\begin{Shaded}...\\end{Shaded}`` (fancyvrb), and raw LaTeX commands
+    placed *before* the opening fence are respected by XeLaTeX.
+    The ``\\fvset{breaklines=true}`` in report.yaml handles the actual line
+    breaking; \\small / \\scriptsize reduce the need for it on very long lines.
+    """
+    LONG_LINE_CHARS = 72   # lines longer than this trigger \small
+    WRAP_LINE_CHARS = 100  # lines longer than this trigger \scriptsize
+
+    lines = content.split('\n')
+    result = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Detect opening fence: ``` or ```lang
+        if re.match(r'^```', line.strip()):
+            fence_indent = len(line) - len(line.lstrip())
+            block = [line]
+            max_len = 0
+            j = i + 1
+
+            # Collect until closing fence
+            while j < len(lines):
+                block.append(lines[j])
+                stripped = lines[j].strip()
+                if stripped == '```' and j > i:
+                    break
+                max_len = max(max_len, len(lines[j]))
+                j += 1
+
+            # Choose font size override based on longest line
+            if max_len > WRAP_LINE_CHARS:
+                result.append('\\scriptsize')
+                result.extend(block)
+                result.append('\\normalsize')
+            elif max_len > LONG_LINE_CHARS:
+                result.append('\\small')
+                result.extend(block)
+                result.append('\\normalsize')
+            else:
+                result.extend(block)
+
+            i = j + 1
+        else:
+            result.append(line)
+            i += 1
+
+    return '\n'.join(result)
+
+
 def fix_wide_tables(content: str) -> str:
     """
     Add LaTeX small font directive before tables with many columns (>5).
@@ -199,6 +268,7 @@ def preprocess(content: str) -> str:
     content = fix_title_blockquotes(content)
     content = convert_ascii_boxes(content)
     content = convert_inline_arrows(content)
+    content = fix_code_block_overflow(content)   # v1.0.1: shrink wide code blocks
     content = fix_wide_tables(content)
     return content
 
